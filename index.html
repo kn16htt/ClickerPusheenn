@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Кликер Пушина</title>
+<style>
+  :root {
+    --bg: #e3d6c8;
+    --panel: #f7f0e6;
+    --panel2: #fffaf2;
+    --gold: #c9962e;
+    --text: #4a3828;
+    --muted: #8a7460;
+    --body-bg: radial-gradient(circle at 50% 15%, #f3ead9 0%, #e3d6c8 65%);
+    --head-filter: drop-shadow(0 2px 2px rgba(255,255,255,.6));
+    --card-border: rgba(201,150,46,.35);
+    --card-shadow: rgba(120,90,50,.25);
+    --arena-bg: radial-gradient(circle at 50% 40%, #f5e9d8 0%, #e4d3bd 70%);
+    --arena-border: rgba(201, 150, 46, .45);
+    --sprite-border: rgba(201,150,46,.5);
+    --item-bg: rgba(255,255,255,.55);
+    --item-border: rgba(120,90,50,.2);
+    --owned-border: #3fae5f;
+    --owned-bg: rgba(63,174,95,.12);
+    --ever-color: #3fae5f;
+    --equip-shadow: rgba(201,150,46,.4);
+    --locked: #d64545;
+    --tab-bg: rgba(255,255,255,.5);
+    --tab-border: rgba(120,90,50,.3);
+    --tab-active-text: #fff8ec;
+    --toast-bg: rgba(255,250,242,.96);
+    --toast-color: #5a4526;
+    --toast-shadow: rgba(120,90,50,.3);
+    --coins-shadow: rgba(201,150,46,.45);
+  }
+  body.dark {
+    --bg: #1a1030;
+    --panel: #2a1b4a;
+    --panel2: #37235f;
+    --gold: #ffd700;
+    --text: #f0e8ff;
+    --muted: #b7a8d4;
+    --body-bg: radial-gradient(circle at 50% 20%, #3a2366 0%, #1a1030 70%);
+    --head-filter: none;
+    --card-border: rgba(255,215,0,.2);
+    --card-shadow: rgba(0,0,0,.45);
+    --arena-bg: radial-gradient(circle at 50% 40%, #4a2f80 0%, #251648 70%);
+    --arena-border: rgba(255,215,0,.35);
+    --sprite-border: rgba(255,215,0,.4);
+    --item-bg: rgba(0,0,0,.25);
+    --item-border: rgba(255,255,255,.12);
+    --owned-border: #57ff9a;
+    --owned-bg: rgba(87,255,154,.08);
+    --ever-color: #57ff9a;
+    --equip-shadow: rgba(255,215,0,.45);
+    --locked: #ff6b6b;
+    --tab-bg: rgba(0,0,0,.25);
+    --tab-border: rgba(255,255,255,.15);
+    --tab-active-text: #2a1b4a;
+    --toast-bg: rgba(20,10,40,.95);
+    --toast-color: #ffd700;
+    --toast-shadow: rgba(0,0,0,.5);
+    --coins-shadow: rgba(255,215,0,.45);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--body-bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    user-select: none;
+    transition: background .3s, color .3s;
+  }
+  .header {
+    text-align: center;
+    padding: 16px 10px 6px;
+  }
+  .theme-btn {
+    display: block;
+    margin: 12px auto 0;
+    padding: 9px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--gold);
+    background: var(--item-bg);
+    color: var(--text);
+    cursor: pointer;
+    font-weight: 700;
+    font-size: .88rem;
+    box-shadow: 0 4px 12px var(--card-shadow);
+    transition: background .3s, color .3s;
+  }
+  .theme-btn:hover { border-color: var(--gold); }
+  .header h1 {
+    font-size: 2rem;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, #b8860b, #d95c8e, #3f9db8, #b8860b);
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: hue 6s linear infinite;
+    filter: var(--head-filter);
+  }
+  @keyframes hue { to { background-position: 300% 0; } }
+  @keyframes shift { to { filter: hue-rotate(360deg); } }
+  .sprite {
+    width: 46px;
+    height: 46px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid var(--sprite-border);
+    background: var(--bg);
+    display: block;
+    margin: 0 auto 4px;
+  }
+  .main {
+    display: flex;
+    gap: 18px;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 10px 14px 40px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .card {
+    background: linear-gradient(180deg, var(--panel2), var(--panel));
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 8px 24px var(--card-shadow);
+  }
+  .left { flex: 1 1 360px; min-width: 300px; }
+  .right { flex: 1 1 420px; min-width: 300px; }
+  .stats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .coins {
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: var(--gold);
+    text-shadow: 0 0 14px var(--coins-shadow);
+  }
+  .coin { width: 18px; height: 18px; object-fit: contain; vertical-align: -3px; display: inline-block; }
+  .coins .coin { width: 2.3em; height: 2.3em; vertical-align: -9px; }
+  .coins span { font-size: 1.2rem; color: var(--muted); }
+  .substats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    color: var(--muted);
+    font-size: .95rem;
+  }
+  .substats b { color: var(--text); }
+  .arena {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--arena-bg);
+    cursor: pointer;
+    touch-action: manipulation;
+    border: 2px solid var(--arena-border);
+  }
+  #pushina {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    padding: 18px;
+    filter: drop-shadow(0 10px 18px rgba(0,0,0,.5));
+    transition: transform .08s ease, filter .4s ease;
+  }
+  .arena:active #pushina { transform: scale(.92); }
+  .arena.glow { animation: pop .18s ease; }
+  @keyframes pop {
+    0% { filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+    40% { filter: drop-shadow(0 0 22px rgba(255,255,255,.95)); }
+    100% { filter: drop-shadow(0 0 0 rgba(255,255,255,0)); }
+  }
+  .float-num {
+    position: absolute;
+    font-weight: 800;
+    pointer-events: none;
+    animation: floatUp 1s ease-out forwards;
+    text-shadow: 0 2px 4px rgba(0,0,0,.7);
+    z-index: 5;
+  }
+  @keyframes floatUp {
+    from { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(-90px) scale(1.4); }
+  }
+  .skin-name {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 1.05rem;
+    color: var(--gold);
+    min-height: 1.4em;
+  }
+  .section-title {
+    font-size: 1.15rem;
+    color: var(--gold);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .shop {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  .item {
+    background: var(--item-bg);
+    border: 1px solid var(--item-border);
+    border-radius: 14px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform .12s, border-color .12s, box-shadow .12s;
+    position: relative;
+  }
+  .item:hover { transform: translateY(-3px); border-color: var(--gold); }
+  .item:active { transform: scale(.96); }
+  .item.owned { border-color: var(--owned-border); background: var(--owned-bg); }
+  .item.equipped { outline: 2px solid var(--gold); box-shadow: 0 0 14px var(--equip-shadow); }
+  .item.cant { opacity: .55; cursor: not-allowed; }
+  .item.afford { border-color: var(--gold); animation: affordGlow 1.2s ease-in-out infinite; }
+  @keyframes affordGlow {
+    0%, 100% { box-shadow: 0 0 5px var(--equip-shadow); }
+    50% { box-shadow: 0 0 16px var(--equip-shadow); }
+  }
+  .item .emoji { font-size: 2rem; display: block; margin-bottom: 4px; }
+  .item .iname { font-weight: 700; font-size: .95rem; }
+  .item .desc { font-size: .75rem; color: var(--muted); min-height: 2.4em; margin: 4px 0; }
+  .item .price { color: var(--gold); font-weight: 700; font-size: .9rem; }
+  .item .price.locked { color: var(--locked); }
+  .item .ever { display: inline-block; font-size: .68rem; color: var(--ever-color); margin-top: 4px; }
+  .tabbar { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tab {
+    flex: 1;
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid var(--tab-border);
+    background: var(--tab-bg);
+    color: var(--text);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: .9rem;
+  }
+  .tab.active { background: var(--gold); color: var(--tab-active-text); border-color: var(--gold); }
+  .reset-btn {
+    margin-top: 14px;
+    width: 100%;
+    padding: 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(214,69,69,.5);
+    background: rgba(214,69,69,.1);
+    color: var(--locked);
+    cursor: pointer;
+    font-size: .85rem;
+  }
+  .reset-btn:hover { background: rgba(214,69,69,.2); }
+  .toast {
+    position: fixed;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--toast-bg);
+    border: 1px solid var(--gold);
+    color: var(--toast-color);
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-weight: 700;
+    box-shadow: 0 6px 18px var(--toast-shadow);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s, transform .25s;
+    z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(6px); }
+  .info-line { margin-top: 10px; font-size: .8rem; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🐾 КЛИКЕР ПУШИНА</h1>
+</div>
+
+<div class="main">
+  <div class="card left">
+    <div class="stats">
+      <div class="coins"><img class="coin" src="pusheen_coin.png" alt="пушин коин"> <span id="coinsDisplay">0</span></div>
+      <div class="substats">
+        <span>За клик: <b id="perClick">1</b></span>
+        <span>В секунду: <b id="perSec">0</b></span>
+      </div>
+    </div>
+    <div id="arena" class="arena">
+      <img id="pushina" src="default_pusheen(skin1).png" alt="ПУШИН" draggable="false">
+    </div>
+    <div class="skin-name" id="skinName">Классический Пушин</div>
+    <div class="info-line">👆 Кликай по Пушину, чтобы зарабатывать пушин коины</div>
+    <button class="theme-btn" type="button" id="themeBtn">🌙 Тёмная</button>
+  </div>
+
+  <div class="card right">
+    <div class="tabbar">
+      <div class="tab active" data-tab="skins">🎨 Скины</div>
+      <div class="tab" data-tab="upgrades">⚡ Улучшения</div>
+    </div>
+    <div class="section-title" id="shopTitle">🎨 Скины Пушина</div>
+    <div id="shop" class="shop"></div>
+    <button class="reset-btn" id="resetBtn">🔄 Сбросить прогресс</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var IMG = 'default_pusheen(skin1).png';
+  var COIN = '<img class="coin" src="pusheen_coin.png" alt="пушин коин">';
+  var SAVE_KEY = 'pushina_clicker_save_v3';
+
+  var SKIN_IMAGES = {
+    classic: 'default_pusheen(skin1).png',
+    gold: 'skin2.png',
+    fire: 'skin3-no-bg-preview (carve.photos).png',
+    ice: '4.png',
+    neon: 'skin5-no-bg-preview (carve.photos).png',
+    rainbow: 'skin6-no-bg-preview (carve.photos).png',
+    cosmic: 'skin7-fotor-bg-remover-202609180748.png',
+    royal: 'skin8-Photoroom.png'
+  };
+
+  var SKINS = [
+    {
+      id: 'classic', name: 'Классический Пушин', emoji: '🐱', price: 0,
+      desc: 'Базовый и родной', buff: { type: 'x', mult: 1 },
+      filter: 'none', ever: false
+    },
+    {
+      id: 'gold', name: 'Пушин с кормом', emoji: '🍖', price: 100,
+      desc: '+100% к кликам', buff: { type: 'x', mult: 2 },
+      filter: 'sepia(1) saturate(2.6) hue-rotate(-12deg) brightness(1.15)',
+      ever: false
+    },
+    {
+      id: 'fire', name: 'Пушин сладкоежка', emoji: '🍩', price: 500,
+      desc: '×3 кликам, шанс ×10', buff: { type: 'fire', mult: 3, chance: 0.15, crit: 10 },
+      filter: 'sepia(1) saturate(4) hue-rotate(340deg) brightness(1.15)',
+      ever: false
+    },
+    {
+      id: 'ice', name: 'Пушин фудкортница', emoji: '🍜', price: 1200,
+      desc: '×2 кликам, ×6 каждый 3-й', buff: { type: 'chain', mult: 2, every: 3, bonus: 6 },
+      filter: 'saturate(2.4) hue-rotate(190deg) brightness(1.25) contrast(1.1)',
+      ever: false
+    },
+    {
+      id: 'neon', name: 'Неоновый Пушин', emoji: '🟣', price: 3000,
+      desc: '×4 кликам', buff: { type: 'x', mult: 4 },
+      filter: 'saturate(3.5) hue-rotate(280deg) brightness(1.2)',
+      ever: false
+    },
+    {
+      id: 'rainbow', name: 'Радужный Пушин', emoji: '🌈', price: 7000,
+      desc: 'Клик ×2–×8 случайно', buff: { type: 'random', min: 2, max: 8 },
+      filter: null, rainbow: true, ever: false
+    },
+    {
+      id: 'cosmic', name: 'Диджей Пушин', emoji: '🎧', price: 15000,
+      desc: '×6 кликам и +5🪙/сек', buff: { type: 'x', mult: 6, passive: 5 },
+      filter: 'saturate(1.6) hue-rotate(250deg) brightness(0.9) contrast(1.3)', rainbow: true,
+      ever: false
+    },
+    {
+      id: 'royal', name: 'Пушин викинг', emoji: '⚔️', price: 50000,
+      desc: '×10 кликам и +15🪙/сек', buff: { type: 'x', mult: 10, passive: 15 },
+      filter: 'sepia(0.8) saturate(2.2) hue-rotate(-20deg) brightness(1.3)',
+      ever: true
+    }
+  ];
+
+  var UPGRADES = [
+    { id: 'click1', name: 'Сила лапки', emoji: '🐾', img: '1.png', base: 25, growth: 1.55, desc: 'Увеличивает клики', stat: 'clickPower' },
+    { id: 'click2', name: 'Гиперлапка', emoji: '🦾', img: '2.png', base: 500, growth: 1.6, desc: 'Сильно увеличивает клики', stat: 'clickPower', req: 5 },
+    { id: 'click3', name: 'Космо-Пушин', emoji: '⚡', img: '3.png', base: 5000, growth: 1.65, desc: 'Клик ×3', stat: 'clickMult', req: 10 },
+    { id: 'auto1', name: 'Пушин-исследователь', emoji: '🔍', img: '4.png', base: 50, growth: 1.5, desc: '+1🪙 в секунду', stat: 'autoIncome' },
+    { id: 'auto2', name: 'Пушин-уборщик', emoji: '🏠', img: '5.png', base: 800, growth: 1.55, desc: '+6🪙 в секунду', stat: 'autoIncome', req: 8 },
+    { id: 'auto3', name: 'Пушин-магнат', emoji: '💼', img: '6.png', base: 6000, growth: 1.6, desc: '+30🪙 в секунду', stat: 'autoIncome', req: 15 }
+  ];
+
+  var state = {
+    coins: 0,
+    clicks: 0,
+    upgLevels: {},
+    ownedSkins: ['classic'],
+    equippedSkin: 'classic'
+  };
+
+  function zeroUpgLevels(target) {
+    for (var i = 0; i < UPGRADES.length; i++) target[UPGRADES[i].id] = 0;
+    return target;
+  }
+  zeroUpgLevels(state.upgLevels);
+
+  var TABS = { skins: SKINS, upgrades: UPGRADES };
+  var currentTab = 'skins';
+
+  var coinsEl = document.getElementById('coinsDisplay');
+  var perClickEl = document.getElementById('perClick');
+  var perSecEl = document.getElementById('perSec');
+  var arenaEl = document.getElementById('arena');
+  var pushinaEl = document.getElementById('pushina');
+  var skinNameEl = document.getElementById('skinName');
+  var shopEl = document.getElementById('shop');
+  var shopTitleEl = document.getElementById('shopTitle');
+  var toastEl = document.getElementById('toast');
+  var resetBtn = document.getElementById('resetBtn');
+  var tabs = document.querySelectorAll('.tab');
+  var themeBtn = document.getElementById('themeBtn');
+
+  var dark = false;
+  try { dark = localStorage.getItem('pushina_theme_v1') === 'dark'; } catch (e) {}
+  function applyTheme() {
+    document.body.classList.toggle('dark', dark);
+    themeBtn.textContent = dark ? '☀️ Светлая' : '🌙 Тёмная';
+  }
+  themeBtn.addEventListener('click', function () {
+    dark = !dark;
+    try { localStorage.setItem('pushina_theme_v1', dark ? 'dark' : 'light'); } catch (e) {}
+    applyTheme();
+  });
+  applyTheme();
+
+  function getSkin(id) {
+    for (var i = 0; i < SKINS.length; i++) if (SKINS[i].id === id) return SKINS[i];
+    return null;
+  }
+  function getUpgrade(id) {
+    for (var i = 0; i < UPGRADES.length; i++) if (UPGRADES[i].id === id) return UPGRADES[i];
+    return null;
+  }
+  function levelOf(upg) {
+    return state.upgLevels[upg.id] || 0;
+  }
+  function priceOf(upg) {
+    var lvl = levelOf(upg);
+    return Math.ceil(upg.base * Math.pow(upg.growth, lvl));
+  }
+  function baseClickFromLevel() { return 1 + (state.upgLevels.click1 || 0) + (state.upgLevels.click2 || 0) * 2; }
+  function multFromLevel() { return 1 + (state.upgLevels.click3 || 0) * 2; }
+  function baseAutoIncome() { return (state.upgLevels.auto1 || 0) * 1 + (state.upgLevels.auto2 || 0) * 6 + (state.upgLevels.auto3 || 0) * 30; }
+  function skinBuff(skin) {
+    skin = skin || getSkin(state.equippedSkin);
+    if (!skin) return { mult: 1, extra: 0, passive: 0 };
+    var b = skin.buff, mult = 1, extra = 0, passive = 0;
+    if (b.type === 'fire') { mult = b.mult; }
+    else if (b.type === 'chain') { mult = b.mult; }
+    else if (b.type === 'random') { return { mult: 1, extra: 0, passive: 0, random: true, min: b.min, max: b.max }; }
+    else if (b.type === 'x') { mult = b.mult; }
+    if (b.passive) passive = b.passive;
+    return { mult: mult, extra: extra, passive: passive, critChance: b.chance, critMult: b.crit };
+  }
+  function rounded(n) {
+    if (n >= 1e15) return n.toExponential(2).replace('+', '');
+    if (n >= 1e6) return (Math.round(n / 1000) / 1000).toLocaleString('ru-RU');
+    return Math.floor(n).toLocaleString('ru-RU');
+  }
+
+  function computeClick() {
+    var skin = getSkin(state.equippedSkin);
+    var buff = skinBuff(skin);
+    var base = baseClickFromLevel() * multFromLevel();
+    var total;
+    if (buff.random) {
+      total = base * (Math.floor(Math.random() * (buff.max - buff.min + 1)) + buff.min);
+    } else if (buff.critChance && Math.random() < buff.critChance) {
+      total = base * buff.mult * buff.critMult;
+    } else if (buff.type === 'chain' && state.clicks > 0 && state.clicks % buff.every === 0) {
+      total = base * buff.bonus;
+    } else {
+      total = base * buff.mult;
+    }
+    return Math.floor(total);
+  }
+
+  function computeIncome() {
+    var skin = getSkin(state.equippedSkin);
+    var buff = skinBuff(skin);
+    return baseAutoIncome() + (buff.passive || 0);
+  }
+
+  function applySkinVisual(id) {
+    var skin = getSkin(id);
+    var imgFile = SKIN_IMAGES[id];
+    skinNameEl.textContent = skin.emoji + ' ' + skin.name;
+    if (skin.buff.passive) skinNameEl.innerHTML += ' (+' + skin.buff.passive + '🪙/сек)'.replace(/🪙/g, COIN);
+
+    if (skin.rainbow) {
+      pushinaEl.style.animation = 'shift 3s linear infinite';
+      pushinaEl.style.filter = 'saturate(1.7)';
+    } else {
+      pushinaEl.style.animation = 'none';
+      pushinaEl.style.filter = 'none';
+    }
+
+    var probe = new Image();
+    probe.onload = function () { setPushina(imgFile); };
+    probe.onerror = function () { setPushina(IMG); };
+    probe.src = imgFile;
+  }
+
+  function setPushina(src) {
+    pushinaEl.src = src;
+  }
+
+  function updateStats() {
+    coinsEl.textContent = rounded(state.coins);
+    perClickEl.textContent = rounded(computeClick());
+    perSecEl.textContent = rounded(computeIncome());
+  }
+
+  function render() {
+    updateStats();
+    applySkinVisual(state.equippedSkin);
+
+    var html = '';
+    var list = TABS[currentTab];
+    shopTitleEl.textContent = currentTab === 'skins' ? '🎨 Скины Пушина'
+      : currentTab === 'skins' ? '🎨 Скины' : '⚡ Улучшения (постоянные)';
+
+    for (var i = 0; i < list.length; i++) {
+      if (currentTab === 'skins') html += renderSkin(list[i]);
+      else html += renderUpgrade(list[i]);
+    }
+    shopEl.innerHTML = html.replace(/🪙/g, COIN);
+  }
+
+  function renderSkin(s) {
+    var owned = state.ownedSkins.indexOf(s.id) !== -1;
+    var equipped = state.equippedSkin === s.id;
+    var afford = !owned && state.coins >= s.price;
+    var cls = 'item' + (owned ? ' owned' : '') + (equipped ? ' equipped' : '') + (afford ? ' afford' : '') + (!owned && state.coins < s.price ? ' cant' : '');
+    var priceHtml = s.price === 0 ? '<div class="price">Бесплатно</div>'
+      : '<div class="' + (owned ? 'owned' : (!owned && state.coins < s.price ? 'price locked' : 'price')) + '">🪙 ' + rounded(s.price) + '</div>';
+    return '<div class="' + cls + '" data-id="' + s.id + '" data-kind="skin">' +
+      '<img class="sprite" src="' + SKIN_IMAGES[s.id] + '" onerror="this.outerHTML=`<div class=&quot;emoji&quot;>' + s.emoji + '</div>`">' +
+      '<div class="iname">' + s.name + '</div>' +
+      '<div class="desc">' + s.desc + '</div>' + priceHtml +
+      (equipped ? '<div class="ever">✓ НАДЕТА</div>' : (owned ? '<div class="ever">Куплена</div>' : '')) +
+      '</div>';
+  }
+
+  function renderUpgrade(u) {
+    var lvl = levelOf(u);
+    var price = priceOf(u);
+    var afford = state.coins >= price;
+    var cls = 'item' + (afford ? ' afford' : ' cant');
+    return '<div class="' + cls + '" data-id="' + u.id + '" data-kind="upgrade">' +
+      '<img class="sprite" src="' + u.img + '" onerror="this.outerHTML=`<div class=&quot;emoji&quot;>' + u.emoji + '</div>`">' +
+      '<div class="iname">' + u.name + '</div>' +
+      '<div class="desc">' + u.desc + '</div>' +
+      '<div class="price">🪙 ' + rounded(price) + '</div>' +
+      '<div class="ever">Уровень: ' + lvl + '</div>' +
+      '</div>';
+  }
+
+  function buySkin(id) {
+    var s = getSkin(id);
+    if (!s) return;
+    if (state.ownedSkins.indexOf(id) !== -1) {
+      if (state.equippedSkin !== id) {
+        state.equippedSkin = id;
+        toast('✨ Надели: ' + s.name);
+        save(); render();
+      }
+      return;
+    }
+    if (state.coins < s.price) { toast('❌ Не хватает монет!'); return; }
+    state.coins -= s.price;
+    state.ownedSkins.push(id);
+    state.equippedSkin = id;
+    toast('🎉 Куплен скин: ' + s.name + (s.buff.passive ? ' (+' + s.buff.passive + '🪙/сек)' : ''));
+    save(); render();
+  }
+
+  function buyUpgrade(id) {
+    var u = getUpgrade(id);
+    if (!u) return;
+    var price = priceOf(u);
+    if (state.coins < price) { toast('❌ Не хватает монет!'); return; }
+    state.coins -= price;
+    state.upgLevels[u.id] = (state.upgLevels[u.id] || 0) + 1;
+    toast('⚡ Улучшено: ' + u.name + ' (ур. ' + levelOf(u) + ')');
+    save(); render();
+  }
+
+  function clickHandler(e) {
+    var rect = arenaEl.getBoundingClientRect();
+    var x = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0].clientX);
+    var y = e.clientY !== undefined ? e.clientY : (e.touches && e.touches[0].clientY);
+    var gain = computeClick();
+    state.coins += gain;
+    state.clicks++;
+    updateStats();
+
+    var n = document.createElement('div');
+    n.className = 'float-num';
+    n.textContent = '+' + gain;
+    var hue = Math.floor(Math.random() * 360);
+    n.style.color = 'hsl(' + hue + ', 95%, 65%)';
+    n.style.left = ((x - rect.left) / rect.width * 100) + '%';
+    n.style.top = ((y - rect.top) / rect.height * 100) + '%';
+    arenaEl.appendChild(n);
+    setTimeout(function () { n.remove(); }, 1000);
+
+    arenaEl.classList.remove('glow');
+    void arenaEl.offsetWidth;
+    arenaEl.classList.add('glow');
+    save();
+  }
+
+  function save() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) {
+        var old = localStorage.getItem('pushina_clicker_save_v2');
+        if (old) {
+          var o = JSON.parse(old);
+          state.coins = o.coins || 0;
+          state.clicks = o.clicks || 0;
+          state.ownedSkins = (o.ownedSkins || ['classic']).slice();
+          state.equippedSkin = o.equippedSkin || 'classic';
+          state.upgLevels.click1 = o.clickLevel || 0;
+          state.upgLevels.click3 = o.clickMultLevel || 0;
+          state.upgLevels.auto1 = o.autoIncomeLevel || 0;
+          save();
+        }
+      } else {
+        var s = JSON.parse(raw);
+        for (var k in state) if (s[k] !== undefined) state[k] = s[k];
+      }
+      if (!state.upgLevels) state.upgLevels = {};
+      if (!state.ownedSkins || state.ownedSkins.indexOf('classic') === -1) state.ownedSkins.unshift('classic');
+      if (!getSkin(state.equippedSkin)) state.equippedSkin = 'classic';
+    } catch (e) {}
+  }
+
+  var toastTimer = null;
+  function toast(msg) {
+    toastEl.innerHTML = msg.replace(/🪙/g, COIN);
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1800);
+  }
+
+  arenaEl.addEventListener('click', clickHandler);
+  arenaEl.addEventListener('touchstart', function (e) { e.preventDefault(); clickHandler(e); }, { passive: false });
+
+  shopEl.addEventListener('click', function (e) {
+    var el = e.target.closest('.item');
+    if (!el) return;
+    var kind = el.getAttribute('data-kind');
+    if (kind === 'skin') buySkin(el.getAttribute('data-id'));
+    else buyUpgrade(el.getAttribute('data-id'));
+  });
+
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      tabs.forEach(function (x) { x.classList.remove('active'); });
+      t.classList.add('active');
+      currentTab = t.getAttribute('data-tab');
+      render();
+    });
+  });
+
+  resetBtn.addEventListener('click', function () {
+    if (!confirm('Точно сбросить весь прогресс? Пушин расстроится 😿')) return;
+    localStorage.removeItem(SAVE_KEY);
+    state = { coins: 0, clicks: 0, upgLevels: {}, ownedSkins: ['classic'], equippedSkin: 'classic' };
+    zeroUpgLevels(state.upgLevels);
+    render();
+  });
+
+  setInterval(function () {
+    var inc = computeIncome();
+    if (inc <= 0) return;
+    state.coins += inc;
+    updateStats();
+    save();
+  }, 1000);
+
+  load();
+  render();
+})();
+</script>
+</body>
+</html>
